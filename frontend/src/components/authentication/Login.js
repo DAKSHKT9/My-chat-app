@@ -9,18 +9,74 @@ import {
   InputGroup,
   InputRightElement,
   Button,
+  useToast,
 } from "@chakra-ui/react";
+import axios from "axios";
+import { useHistory } from "react-router-dom";
 
 const Login = () => {
   const [show, setShow] = useState(false);
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
+  const [loading, setLoading] = useState(false);
+  const toast = useToast();
+  const history = useHistory();
 
   const handleClick = () => {
     setShow(!show);
   };
 
-  const submitHandler = () => {};
+  const submitHandler = async () => {
+    setLoading(true);
+    if (!password || !email) {
+      toast({
+        title: "Please fill all fields",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const config = {
+        headers: {
+          "content-type": "application/json",
+        },
+      };
+
+      const { data } = await axios.post(
+        "/api/user/login",
+        { email, password },
+        config
+      );
+
+      toast({
+        title: "Registration successfull",
+        status: "Success",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+
+      localStorage.setItem("userInfo", JSON.stringify(data));
+      setLoading(false);
+      history.push("/chats");
+    } catch (error) {
+      toast({
+        title: "Please select an image-2",
+        description: error.response.data.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      setLoading(false);
+    }
+  };
+
   return (
     <VStack
       divider={<StackDivider borderColor="gray.200" />}
@@ -33,6 +89,7 @@ const Login = () => {
         <Input
           placeholder="Enter Your email"
           onChange={(e) => setEmail(e.target.value)}
+          value={email}
         />
       </FormControl>
       <FormControl id="password" isRequired>
@@ -40,8 +97,9 @@ const Login = () => {
         <InputGroup>
           <Input
             type={show ? "text" : "password"}
-            placeholder="Enter Your Name"
+            placeholder="Enter Your Password"
             onChange={(e) => setPassword(e.target.value)}
+            value={password}
           />
           <InputRightElement width="5.4rem">
             <Button h="1.75rem" size="sm" onClick={handleClick}>
@@ -55,7 +113,8 @@ const Login = () => {
         colorScheme="blue"
         width="100%"
         style={{ marginTop: 15 }}
-        onClick={submitHandler()}
+        onClick={submitHandler}
+        isLoading={loading}
       >
         Login
       </Button>
@@ -70,7 +129,7 @@ const Login = () => {
           setPassword("123456");
         }}
       >
-        Login
+        Guest User Credentials
       </Button>
     </VStack>
   );
